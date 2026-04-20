@@ -1,0 +1,668 @@
+<!DOCTYPE html>
+
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>wanda — coming soon</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:ital,wght@0,300;0,400;0,500;0,600;1,300&family=Lora:ital,wght@1,400;1,500&display=swap" rel="stylesheet" />
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+```
+:root {
+  --ink:        #1A1814;
+  --ink-soft:   #3D3A35;
+  --ink-muted:  #7A756C;
+  --ink-ghost:  #B8B2A8;
+  --paper:      #FAF8F5;
+  --paper-warm: #F2EDE6;
+  --paper-mid:  #E8E1D8;
+  --sand:       #D4C9B8;
+  --terra:      #C4603A;
+  --cream-text: #F5F0E8;
+}
+
+html, body {
+  width: 100%; height: 100%;
+  overflow: hidden;
+}
+
+body {
+  background: radial-gradient(ellipse 140% 110% at 30% 35%, #FAF8F5 0%, #F3EBE0 52%, #E8DDD0 100%);
+  color: var(--ink);
+  font-family: 'Plus Jakarta Sans', sans-serif;
+  font-weight: 300;
+  -webkit-font-smoothing: antialiased;
+  text-transform: none;
+}
+
+/* Force lowercase everywhere — no exceptions */
+.wordmark, .conf-wordmark-text, .conf-copy, .conf-copy strong, .conf-copy * {
+  text-transform: lowercase !important;
+}
+
+/* Grain */
+body::before {
+  content: '';
+  position: fixed; inset: 0;
+  background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 600 600' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.68' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)' opacity='0.036'/%3E%3C/svg%3E");
+  pointer-events: none; z-index: 400;
+}
+
+/* Arc illustration */
+.arcs {
+  position: fixed; top: -80px; right: -80px;
+  width: min(520px, 72vw); height: min(520px, 72vw);
+  pointer-events: none; z-index: 0;
+  transition: transform 1.8s cubic-bezier(0.16,1,0.3,1), opacity 1.4s ease;
+}
+.arcs.shifted {
+  transform: translate(50px,-50px) scale(1.12) rotate(8deg);
+  opacity: 0.4;
+}
+
+/* ── Page layout — true full screen 3 zones ── */
+.page {
+  position: relative; z-index: 1;
+  width: 100%; height: 100vh; height: 100dvh;
+  display: flex; flex-direction: column;
+  justify-content: space-between;
+  padding: clamp(2rem,6vw,3.5rem) clamp(1.8rem,6vw,4.5rem);
+}
+
+.zone-top  { flex: 0 0 auto; }
+.zone-mid  { flex: 1; display: flex; flex-direction: column; justify-content: center; gap: clamp(1rem,2.5vw,1.6rem); }
+.zone-bot  { flex: 0 0 auto; }
+
+/* ── Wordmark ── */
+.wordmark-wrap {
+  display: inline-flex; align-items: baseline; gap: 0;
+  opacity: 0; animation: fadeUp 0.7s cubic-bezier(0.16,1,0.3,1) forwards 0.1s;
+}
+
+.wordmark {
+  font-family: 'Plus Jakarta Sans', sans-serif;
+  font-weight: 600;
+  font-size: clamp(5.5rem, 22vw, 14rem);
+  line-height: 0.9;
+  letter-spacing: -0.035em;
+  color: var(--ink);
+  text-transform: lowercase;
+  text-shadow: 0 2px 0 rgba(255,255,255,0.5), 0 8px 28px rgba(26,24,20,0.08);
+}
+
+.terra-dot {
+  width: clamp(7px,1.4vw,13px);
+  height: clamp(7px,1.4vw,13px);
+  background: var(--terra);
+  border-radius: 50%;
+  margin-left: clamp(3px,0.5vw,6px);
+  margin-bottom: clamp(5px,1.1vw,10px);
+  flex-shrink: 0;
+  box-shadow: 0 2px 10px rgba(196,96,58,0.4);
+}
+
+/* ── Eyebrow ── */
+.eyebrow {
+  font-family: 'Plus Jakarta Sans', sans-serif;
+  font-weight: 500;
+  font-size: clamp(11px,1.6vw,13px);
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+  color: var(--ink-muted);
+  opacity: 0; animation: fadeUp 0.6s ease forwards 0.42s;
+}
+
+/* ── Headline ── */
+.headline {
+  opacity: 0; animation: fadeUp 0.7s cubic-bezier(0.16,1,0.3,1) forwards 0.54s;
+}
+
+.hl-bold {
+  display: block;
+  font-family: 'Plus Jakarta Sans', sans-serif;
+  font-weight: 700;
+  font-size: clamp(2.4rem,6.5vw,5rem);
+  letter-spacing: -0.03em;
+  color: var(--ink);
+  line-height: 1.02;
+}
+
+.hl-italic {
+  display: block;
+  font-family: 'Lora', Georgia, serif;
+  font-weight: 500; font-style: italic;
+  font-size: clamp(2.4rem,6.5vw,5rem);
+  letter-spacing: -0.01em;
+  color: var(--terra);
+  line-height: 1.1;
+}
+
+/* ── CTA wrap ── */
+.cta-wrap {
+  opacity: 0; animation: fadeUp 0.6s ease forwards 0.7s;
+}
+
+/* ════════════════════════════════════
+   SPLIT-FLAP BUTTON
+════════════════════════════════════ */
+.flap-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: clamp(0.85rem,2vw,1.1rem) clamp(1.8rem,4vw,2.8rem);
+  border-radius: 999px;
+  background: var(--ink);
+  border: none;
+  cursor: pointer;
+  outline: none;
+  -webkit-appearance: none;
+  position: relative;
+  overflow: hidden;
+  box-shadow:
+    0 1px 0 rgba(255,255,255,0.06) inset,
+    0 6px 24px rgba(26,24,20,0.22),
+    0 2px 6px rgba(26,24,20,0.16),
+    0 20px 60px rgba(26,24,20,0.1);
+  transition: transform 0.2s ease, box-shadow 0.25s ease, background 0.4s ease;
+  gap: 0;
+  min-width: clamp(200px, 44vw, 310px);
+}
+
+.flap-btn:hover {
+  transform: translateY(-2px) scale(1.018);
+  box-shadow:
+    0 1px 0 rgba(255,255,255,0.08) inset,
+    0 10px 36px rgba(26,24,20,0.28),
+    0 4px 10px rgba(26,24,20,0.18),
+    0 28px 70px rgba(26,24,20,0.12);
+}
+
+.flap-btn:active { transform: scale(0.97); }
+
+/* Subtle sheen sweep on the pill */
+.flap-btn::after {
+  content: '';
+  position: absolute; inset: 0;
+  border-radius: 999px;
+  background: linear-gradient(105deg, transparent 30%, rgba(255,255,255,0.06) 50%, transparent 70%);
+  background-size: 200% 100%;
+  animation: btnSheen 4s ease-in-out infinite;
+  pointer-events: none;
+}
+
+@keyframes btnSheen {
+  0%   { background-position: 200% 0; }
+  50%  { background-position: -100% 0; }
+  100% { background-position: 200% 0; }
+}
+
+/* ── Split flap display ── */
+.flap-display {
+  display: flex;
+  align-items: center;
+  gap: clamp(1px, 0.3vw, 3px);
+  position: relative;
+  z-index: 2;
+}
+
+/* Each character cell */
+.flap-char {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: clamp(14px, 3.2vw, 22px);
+  height: clamp(28px, 6.5vw, 46px);
+  position: relative;
+  overflow: hidden;
+  perspective: 120px;
+}
+
+/* Space character is wider */
+.flap-char.space {
+  width: clamp(5px, 1vw, 9px);
+}
+
+/* The visible face of each flap */
+.flap-face {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-family: 'Plus Jakarta Sans', sans-serif;
+  font-weight: 600;
+  font-size: clamp(0.95rem, 2.8vw, 1.5rem);
+  letter-spacing: 0.04em;
+  color: var(--cream-text);
+  text-shadow: 0 1px 3px rgba(0,0,0,0.4);
+  backface-visibility: hidden;
+  transform-origin: center bottom;
+  will-change: transform;
+}
+
+/* Centre divider line — the mechanical split */
+.flap-char::after {
+  content: '';
+  position: absolute;
+  left: 0; right: 0;
+  top: 50%;
+  height: 1px;
+  background: rgba(0,0,0,0.35);
+  z-index: 10;
+  pointer-events: none;
+}
+
+/* Space char has no divider */
+.flap-char.space::after { display: none; }
+
+/* ── Footer ── */
+.footer-line {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 8px;
+  opacity: 0;
+  animation: fadeUp 0.6s ease forwards 0.88s;
+}
+
+.footer-rule {
+  width: 24px; height: 1px;
+  background: var(--terra);
+  opacity: 0.6;
+}
+
+.footer-text {
+  font-family: 'Plus Jakarta Sans', sans-serif;
+  font-weight: 400;
+  font-size: clamp(16px, 4.5vw, 22px);
+  letter-spacing: 0.02em;
+  text-transform: lowercase;
+  color: var(--ink-soft);
+}
+
+/* ── Ink wash transition ── */
+.ink-wash {
+  position: fixed; inset: 0; z-index: 100;
+  background: var(--ink);
+  clip-path: circle(0% at 50% 72%);
+  transition: clip-path 0.75s cubic-bezier(0.7,0,0.3,1);
+  pointer-events: none;
+}
+
+.ink-wash.expand {
+  clip-path: circle(150% at 50% 72%);
+  pointer-events: auto;
+}
+
+/* ── Confirmed state ── */
+.confirmed-overlay {
+  position: fixed; inset: 0; z-index: 200;
+  display: flex; flex-direction: column;
+  justify-content: space-between;
+  padding: clamp(2rem,6vw,3.5rem) clamp(1.8rem,6vw,4.5rem);
+  opacity: 0; pointer-events: none;
+  transition: opacity 0.6s ease;
+}
+
+.confirmed-overlay.enter {
+  opacity: 1; pointer-events: auto;
+}
+
+.conf-wordmark-wrap {
+  display: inline-flex; align-items: baseline; gap: 0;
+}
+
+.conf-wordmark-text {
+  font-family: 'Plus Jakarta Sans', sans-serif;
+  font-weight: 600;
+  font-size: clamp(5.5rem, 22vw, 14rem);
+  line-height: 0.9;
+  letter-spacing: -0.035em;
+  color: var(--cream-text);
+  text-transform: lowercase !important;
+  text-shadow: 0 2px 0 rgba(255,255,255,0.08), 0 8px 28px rgba(0,0,0,0.3);
+}
+
+.conf-dot {
+  width: clamp(7px,1.4vw,13px);
+  height: clamp(7px,1.4vw,13px);
+  background: var(--terra);
+  border-radius: 50%;
+  margin-left: clamp(3px,0.5vw,6px);
+  margin-bottom: clamp(5px,1.1vw,10px);
+  flex-shrink: 0;
+  box-shadow: 0 2px 10px rgba(196,96,58,0.5);
+}
+
+.conf-mid { display: flex; flex-direction: column; gap: 0.4rem; }
+
+.conf-copy {
+  font-family: 'Plus Jakarta Sans', sans-serif;
+  font-weight: 300;
+  font-size: clamp(1.05rem,2.8vw,1.4rem);
+  line-height: 1.65;
+  color: rgba(245,240,232,0.65);
+  max-width: 28ch;
+}
+
+.conf-copy strong {
+  color: var(--cream-text);
+  font-weight: 500;
+}
+
+.conf-footer {
+  display: flex; flex-direction: column;
+  align-items: flex-start; gap: 8px;
+}
+
+.conf-rule {
+  width: 24px; height: 1px;
+  background: var(--terra); opacity: 0.5;
+}
+
+.conf-engine {
+  font-family: 'Plus Jakarta Sans', sans-serif;
+  font-weight: 400;
+  font-size: clamp(16px, 4.5vw, 22px);
+  letter-spacing: 0.02em;
+  text-transform: lowercase;
+  color: rgba(245,240,232,0.75);
+}
+
+/* ── Animations ── */
+@keyframes fadeUp {
+  from { opacity: 0; transform: translateY(10px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+
+.page.exit {
+  transition: opacity 0.4s ease;
+  opacity: 0; pointer-events: none;
+}
+
+@media (max-width: 480px) {
+  html, body { overflow: hidden; }
+}
+```
+
+  </style>
+</head>
+<body>
+
+  <!-- Arc illustration -->
+
+  <svg class="arcs" id="arcs" viewBox="0 0 520 520" fill="none" xmlns="http://www.w3.org/2000/svg">
+    <circle cx="520" cy="0" r="95"  stroke="#1A1814" stroke-width="0.65" opacity="0.13"/>
+    <circle cx="520" cy="0" r="162" stroke="#1A1814" stroke-width="0.65" opacity="0.11"/>
+    <circle cx="520" cy="0" r="234" stroke="#1A1814" stroke-width="0.7"  opacity="0.10"/>
+    <circle cx="520" cy="0" r="312" stroke="#1A1814" stroke-width="0.6"  opacity="0.09"/>
+    <circle cx="520" cy="0" r="396" stroke="#1A1814" stroke-width="0.5"  opacity="0.07"/>
+    <circle cx="520" cy="0" r="488" stroke="#1A1814" stroke-width="0.4"  opacity="0.05"/>
+    <path d="M 458 50 Q 360 148 195 328" stroke="#1A1814" stroke-width="0.9" stroke-dasharray="3 9"  fill="none" opacity="0.16"/>
+    <path d="M 440 24 Q 335 116 162 295" stroke="#1A1814" stroke-width="0.5" stroke-dasharray="2 12" fill="none" opacity="0.09"/>
+    <path d="M 478 78 Q 378 188 230 375" stroke="#1A1814" stroke-width="0.4" stroke-dasharray="1 8"  fill="none" opacity="0.07"/>
+    <circle cx="458" cy="50" r="4"   fill="#1A1814"  opacity="0.18"/>
+    <circle cx="458" cy="50" r="8.5" stroke="#1A1814" stroke-width="0.7" fill="none" opacity="0.12"/>
+    <circle cx="195" cy="328" r="3.5" fill="#C4603A" opacity="0.3"/>
+    <circle cx="195" cy="328" r="7.5" stroke="#C4603A" stroke-width="0.6" fill="none" opacity="0.18"/>
+    <line x1="189" y1="328" x2="201" y2="328" stroke="#C4603A" stroke-width="0.6" opacity="0.22"/>
+    <line x1="195" y1="322" x2="195" y2="334" stroke="#C4603A" stroke-width="0.6" opacity="0.22"/>
+    <path d="M 520 75 Q 435 70 355 84"  stroke="#1A1814" stroke-width="0.4" opacity="0.07" fill="none"/>
+    <path d="M 520 148 Q 412 143 310 160" stroke="#1A1814" stroke-width="0.35" opacity="0.06" fill="none"/>
+  </svg>
+
+  <!-- Ink wash overlay -->
+
+  <div class="ink-wash" id="inkWash"></div>
+
+  <!-- Main page -->
+
+  <div class="page" id="mainPage">
+
+```
+<div class="zone-top">
+  <div class="wordmark-wrap">
+    <span class="wordmark">wanda</span>
+    <span class="terra-dot"></span>
+  </div>
+</div>
+
+<div class="zone-mid">
+  <p class="eyebrow">start one step earlier</p>
+
+  <div class="headline">
+    <span class="hl-bold">Inspiration before</span>
+    <span class="hl-italic">destination.</span>
+  </div>
+
+  <div class="cta-wrap">
+    <button class="flap-btn" id="flapBtn" onclick="handleClick()">
+      <div class="flap-display" id="flapDisplay"></div>
+    </button>
+  </div>
+</div>
+
+<div class="zone-bot">
+  <div class="footer-line">
+    <div class="footer-rule"></div>
+    <span class="footer-text">the destination decision engine</span>
+  </div>
+</div>
+```
+
+  </div>
+
+  <!-- Confirmed overlay (dark) -->
+
+  <div class="confirmed-overlay" id="confirmedOverlay">
+    <div class="conf-wordmark-wrap">
+      <span class="conf-wordmark-text">wanda</span>
+
+```
+  <span class="conf-dot"></span>
+</div>
+<div class="conf-mid">
+  <p class="conf-copy">
+    the best trips take a little planning.<br>
+    <strong>wanda launches soon.</strong>
+  </p>
+</div>
+<div class="conf-footer">
+  <div class="conf-rule"></div>
+  <span class="conf-engine">the destination decision engine</span>
+</div>
+```
+
+  </div>
+
+  <script>
+  (function () {
+
+    const TARGET   = 'launches soon';
+    const CHARS    = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789·—';
+    const STAGGER  = 62;   // ms between each char starting
+    const FLIPS    = 10;   // shuffles before landing
+    const FLIP_MS  = 68;   // ms per flip frame
+    const REPLAY   = 14000; // auto-replay interval ms
+
+    const display  = document.getElementById('flapDisplay');
+    let cells      = [];
+    let replayTimer, flipping = false, clicked = false;
+
+    /* Build the character cells */
+    function buildCells() {
+      display.innerHTML = '';
+      cells = [];
+      for (let i = 0; i < TARGET.length; i++) {
+        const ch = TARGET[i];
+        if (ch === ' ') {
+          const sp = document.createElement('div');
+          sp.className = 'flap-char space';
+          display.appendChild(sp);
+          cells.push(null);
+          continue;
+        }
+        const cell = document.createElement('div');
+        cell.className = 'flap-char';
+        const face = document.createElement('div');
+        face.className = 'flap-face';
+        face.textContent = ch.toUpperCase();
+        cell.appendChild(face);
+        display.appendChild(cell);
+        cells.push({ cell, face, target: ch.toUpperCase() });
+      }
+    }
+
+    /* Animate a single cell through N random chars then land on target */
+    function flipCell(cellObj, delay, finalChar, onDone) {
+      if (!cellObj) { if (onDone) setTimeout(onDone, delay); return; }
+      const { face } = cellObj;
+      let count = 0;
+
+      function nextFlip() {
+        if (count < FLIPS) {
+          // Random char
+          const r = CHARS[Math.floor(Math.random() * CHARS.length)];
+          animateFlip(face, r, () => {
+            count++;
+            setTimeout(nextFlip, 0);
+          });
+        } else {
+          // Land on target
+          animateFlip(face, finalChar, onDone);
+        }
+      }
+
+      setTimeout(nextFlip, delay);
+    }
+
+    /* CSS 3D flip for a single face */
+    function animateFlip(face, newChar, cb) {
+      const half = FLIP_MS / 2;
+      // First half — fold down
+      face.style.transition = `transform ${half}ms ease-in`;
+      face.style.transform  = 'rotateX(-90deg)';
+      setTimeout(() => {
+        face.textContent = newChar;
+        face.style.transition = 'none';
+        face.style.transform  = 'rotateX(90deg)';
+        // Force reflow
+        face.offsetHeight;
+        // Second half — unfold up
+        face.style.transition = `transform ${half}ms ease-out`;
+        face.style.transform  = 'rotateX(0deg)';
+        setTimeout(() => { if (cb) cb(); }, half);
+      }, half);
+    }
+
+    /* Run the full board */
+    function runBoard(finalWord, onComplete) {
+      if (flipping) return;
+      flipping = true;
+      let done = 0;
+      let total = cells.filter(c => c !== null).length;
+
+      cells.forEach((c, i) => {
+        if (!c) return;
+        flipCell(c, i * STAGGER, c.target, () => {
+          done++;
+          if (done === total) {
+            flipping = false;
+            if (onComplete) onComplete();
+          }
+        });
+      });
+    }
+
+    /* Scramble all then land — used on click */
+    function scrambleAndLand(word, onComplete) {
+      flipping = true;
+      // Pad/trim to match cell count
+      const letters = TARGET.split('').filter(c => c !== ' ');
+      let done = 0;
+
+      cells.forEach((c, i) => {
+        if (!c) return;
+        // All start simultaneously, longer flip count
+        let count = 0;
+        const totalFlips = 8 + Math.floor(Math.random() * 6);
+        const face = c.face;
+
+        function go() {
+          if (count < totalFlips) {
+            const r = CHARS[Math.floor(Math.random() * CHARS.length)];
+            animateFlip(face, r, () => { count++; go(); });
+          } else {
+            animateFlip(face, c.target, () => {
+              done++;
+              if (done === cells.filter(x=>x).length) {
+                flipping = false;
+                if (onComplete) onComplete();
+              }
+            });
+          }
+        }
+        go();
+      });
+    }
+
+    /* Click handler */
+    window.handleClick = function () {
+      if (clicked) return;
+      clicked = true;
+      clearTimeout(replayTimer);
+
+      const inkWash  = document.getElementById('inkWash');
+      const mainPage = document.getElementById('mainPage');
+      const overlay  = document.getElementById('confirmedOverlay');
+      const arcs     = document.getElementById('arcs');
+      const btn      = document.getElementById('flapBtn');
+
+      btn.style.pointerEvents = 'none';
+
+      // Scramble the board dramatically
+      scrambleAndLand(TARGET, () => {
+        // Short pause, then ink wash expands
+        setTimeout(() => {
+          inkWash.classList.add('expand');
+          arcs.classList.add('shifted');
+
+          // Confirmed overlay after wash covers screen
+          setTimeout(() => {
+            overlay.classList.add('enter');
+          }, 650);
+
+        }, 280);
+      });
+    };
+
+    /* Hover — replay */
+    document.getElementById('flapBtn').addEventListener('mouseenter', () => {
+      if (!clicked && !flipping) runBoard(TARGET);
+    });
+
+    /* Init */
+    buildCells();
+
+    // Initial flip-in on load — staggered, feels like board powering on
+    setTimeout(() => {
+      runBoard(TARGET, () => {
+        // Schedule auto-replay
+        function scheduleReplay() {
+          replayTimer = setTimeout(() => {
+            runBoard(TARGET, scheduleReplay);
+          }, REPLAY);
+        }
+        scheduleReplay();
+      });
+    }, 900);
+
+  })();
+  </script>
+
+</body>
+</html>
