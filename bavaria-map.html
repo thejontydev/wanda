@@ -1,0 +1,1429 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <title>Bavaria · July 2026</title>
+
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,300..900;1,9..144,300..900&family=Plus+Jakarta+Sans:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+
+  <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css">
+  <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+
+  <style>
+    :root {
+      --forest:  #2D5A3D;
+      --amber:   #F5A623;
+      --ink:     #1A1A1A;
+      --soft:    #6B7280;
+      --paper:   #FAFAF8;
+      --white:   #FFFFFF;
+    }
+
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    html, body {
+      height: 100%;
+      overflow: hidden;
+      font-family: 'Plus Jakarta Sans', system-ui, sans-serif;
+      font-size: 15px;
+      background: var(--paper);
+      color: var(--ink);
+    }
+
+    /* ── LAYOUT ──────────────────────────────── */
+    #app {
+      display: flex;
+      flex-direction: column;
+      height: 100vh;
+      height: 100dvh;
+    }
+
+    /* ── HEADER ──────────────────────────────── */
+    #header {
+      flex: 0 0 58px;
+      background: var(--forest);
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 0 14px;
+      z-index: 2000;
+      gap: 8px;
+    }
+
+    .header-title h1 {
+      font-family: 'Fraunces', Georgia, serif;
+      font-style: italic;
+      font-weight: 600;
+      font-size: 17px;
+      color: #F5F0E8;
+      line-height: 1.2;
+    }
+
+    .header-title p {
+      font-size: 11px;
+      font-weight: 300;
+      color: rgba(245, 240, 232, 0.55);
+      letter-spacing: 0.01em;
+    }
+
+    .header-actions { display: flex; gap: 6px; flex-shrink: 0; }
+
+    .nav-btn {
+      font-family: 'Plus Jakarta Sans', system-ui, sans-serif;
+      font-size: 11.5px;
+      font-weight: 500;
+      padding: 5px 9px;
+      border-radius: 20px;
+      border: 1.5px solid rgba(255,255,255,0.28);
+      background: rgba(255,255,255,0.1);
+      color: white;
+      cursor: pointer;
+      text-decoration: none;
+      display: flex;
+      align-items: center;
+      gap: 3px;
+      white-space: nowrap;
+      transition: background 0.18s;
+    }
+    .nav-btn:hover { background: rgba(255,255,255,0.2); }
+
+    /* ── DAY PILLS ───────────────────────────── */
+    #day-pills {
+      flex: 0 0 52px;
+      background: var(--paper);
+      border-bottom: 1px solid rgba(0,0,0,0.07);
+      display: flex;
+      align-items: center;
+      padding: 0 10px;
+      gap: 7px;
+      overflow-x: auto;
+      overflow-y: hidden;
+      scrollbar-width: none;
+      -webkit-overflow-scrolling: touch;
+      z-index: 1500;
+    }
+    #day-pills::-webkit-scrollbar { display: none; }
+
+    .pill {
+      display: flex;
+      align-items: center;
+      gap: 5px;
+      padding: 6px 13px;
+      border-radius: 20px;
+      border: 1.5px solid transparent;
+      background: rgba(0,0,0,0.05);
+      font-family: 'Plus Jakarta Sans', system-ui, sans-serif;
+      font-size: 13px;
+      font-weight: 400;
+      color: var(--soft);
+      cursor: pointer;
+      white-space: nowrap;
+      flex-shrink: 0;
+      transition: all 0.18s;
+    }
+    .pill.active {
+      background: var(--white);
+      font-weight: 700;
+      color: var(--ink);
+      box-shadow: 0 1px 6px rgba(0,0,0,0.1);
+    }
+
+    .pill-dot {
+      width: 7px;
+      height: 7px;
+      border-radius: 50%;
+      flex-shrink: 0;
+    }
+
+    /* ── MAP WRAPPER ─────────────────────────── */
+    #map-wrapper {
+      flex: 1;
+      position: relative;
+      overflow: hidden;
+    }
+
+    #map { width: 100%; height: 100%; }
+
+    /* ── LOADING ─────────────────────────────── */
+    #loading-indicator {
+      position: absolute;
+      top: 12px;
+      left: 50%;
+      transform: translateX(-50%);
+      background: var(--forest);
+      color: white;
+      font-family: 'Plus Jakarta Sans', system-ui, sans-serif;
+      font-size: 12px;
+      font-weight: 500;
+      padding: 6px 14px;
+      border-radius: 20px;
+      z-index: 1200;
+      display: flex;
+      align-items: center;
+      gap: 7px;
+      box-shadow: 0 2px 12px rgba(0,0,0,0.22);
+      transition: opacity 0.4s, background 0.3s;
+      pointer-events: none;
+    }
+    #loading-indicator.done { background: #16A34A; }
+    #loading-indicator.hidden { opacity: 0; }
+
+    .spinner {
+      width: 11px;
+      height: 11px;
+      border: 2px solid rgba(255,255,255,0.35);
+      border-top-color: white;
+      border-radius: 50%;
+      animation: spin 0.75s linear infinite;
+      flex-shrink: 0;
+    }
+    @keyframes spin { to { transform: rotate(360deg); } }
+
+    /* ── LEGEND ──────────────────────────────── */
+    #legend {
+      position: absolute;
+      bottom: 92px;
+      left: 12px;
+      background: white;
+      border-radius: 10px;
+      padding: 9px 12px;
+      box-shadow: 0 2px 12px rgba(0,0,0,0.13);
+      z-index: 900;
+      font-family: 'Plus Jakarta Sans', system-ui, sans-serif;
+    }
+
+    .legend-item {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      font-size: 11px;
+      color: var(--soft);
+      margin-bottom: 5px;
+    }
+    .legend-item:last-child { margin-bottom: 0; }
+
+    .leg-base {
+      width: 16px; height: 16px;
+      border-radius: 50%;
+      background: #2D5A3D;
+      border: 2px solid #F5A623;
+      flex-shrink: 0;
+    }
+    .leg-stop {
+      width: 14px; height: 14px;
+      border-radius: 50%;
+      background: white;
+      border: 2px solid #60A5FA;
+      flex-shrink: 0;
+    }
+    .leg-dash {
+      width: 24px;
+      border-top: 3px dashed #FBBF24;
+      flex-shrink: 0;
+    }
+
+    /* ── MARKERS ─────────────────────────────── */
+    .base-marker {
+      width: 38px; height: 38px;
+      border-radius: 50%;
+      background: #2D5A3D;
+      border: 3px solid #F5A623;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 15px;
+      box-shadow: 0 3px 12px rgba(0,0,0,0.3);
+      cursor: pointer;
+      transition: transform 0.18s;
+      line-height: 1;
+    }
+    .base-marker:hover { transform: scale(1.1); }
+
+    .stop-marker {
+      width: 28px; height: 28px;
+      border-radius: 50%;
+      background: white;
+      border: 3px solid currentColor;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-family: 'Plus Jakarta Sans', system-ui, sans-serif;
+      font-size: 11px;
+      font-weight: 700;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.2);
+      cursor: pointer;
+      transition: transform 0.18s;
+      line-height: 1;
+    }
+    .stop-marker:hover { transform: scale(1.1); }
+
+    /* ── LEAFLET OVERRIDES ───────────────────── */
+    .leaflet-control-zoom {
+      border: none !important;
+      box-shadow: 0 2px 10px rgba(0,0,0,0.18) !important;
+    }
+    .leaflet-control-zoom a {
+      border-radius: 8px !important;
+      border: none !important;
+      font-family: 'Plus Jakarta Sans', system-ui, sans-serif !important;
+      color: var(--ink) !important;
+    }
+
+    /* Mobile: zoom control moves above drawer peek height */
+    @media (max-width: 767px) {
+      .leaflet-top.leaflet-right {
+        top: auto !important;
+        bottom: 92px;
+      }
+      .leaflet-bottom.leaflet-right {
+        bottom: 92px;
+      }
+      .leaflet-bottom.leaflet-left {
+        bottom: 92px;
+      }
+    }
+
+    .leaflet-control-attribution {
+      font-size: 9px !important;
+      background: rgba(255,255,255,0.75) !important;
+    }
+
+    /* ── DRAWER ──────────────────────────────── */
+    #drawer {
+      position: fixed;
+      bottom: 0; left: 0; right: 0;
+      height: 70vh;
+      background: var(--white);
+      border-radius: 16px 16px 0 0;
+      transform: translateY(calc(70vh - 80px));
+      transition: transform 0.38s cubic-bezier(0.4, 0, 0.2, 1);
+      z-index: 1100;
+      display: flex;
+      flex-direction: column;
+      box-shadow: 0 -4px 28px rgba(0,0,0,0.1);
+      will-change: transform;
+    }
+    #drawer.expanded { transform: translateY(0); }
+
+    .drawer-handle-area {
+      flex: 0 0 auto;
+      padding: 10px 16px 8px;
+      cursor: pointer;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 7px;
+      user-select: none;
+      -webkit-user-select: none;
+    }
+
+    .drawer-handle {
+      width: 36px; height: 4px;
+      background: #DDD;
+      border-radius: 2px;
+    }
+
+    .drawer-peek-info {
+      display: flex;
+      align-items: center;
+      gap: 7px;
+      font-family: 'Plus Jakarta Sans', system-ui, sans-serif;
+    }
+
+    #drawer-day-label {
+      font-size: 14px;
+      font-weight: 600;
+      color: var(--ink);
+    }
+
+    #drawer-stop-count {
+      font-size: 12px;
+      color: var(--soft);
+    }
+
+    .drawer-content {
+      flex: 1;
+      overflow-y: auto;
+      overflow-x: hidden;
+      -webkit-overflow-scrolling: touch;
+    }
+
+    /* ── STOP LIST ───────────────────────────── */
+    .day-group-header {
+      padding: 8px 16px 6px;
+      font-size: 10px;
+      font-weight: 700;
+      letter-spacing: 0.1em;
+      text-transform: uppercase;
+      font-family: 'Plus Jakarta Sans', system-ui, sans-serif;
+    }
+
+    .stop-row {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      padding: 11px 16px;
+      border-bottom: 1px solid rgba(0,0,0,0.055);
+      cursor: pointer;
+      transition: background 0.15s;
+    }
+    .stop-row:hover  { background: rgba(0,0,0,0.025); }
+    .stop-row:active { background: rgba(0,0,0,0.055); }
+
+    .stop-icon {
+      width: 30px; height: 30px;
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      flex-shrink: 0;
+      font-size: 12px;
+    }
+    .stop-icon-base {
+      background: #2D5A3D;
+      border: 2px solid #F5A623;
+    }
+    .stop-icon-num {
+      background: white;
+      border: 2px solid;
+      font-family: 'Plus Jakarta Sans', system-ui, sans-serif;
+      font-size: 11px;
+      font-weight: 700;
+    }
+
+    .stop-info { flex: 1; min-width: 0; }
+
+    .stop-name {
+      font-size: 14px;
+      font-weight: 600;
+      color: var(--ink);
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      font-family: 'Plus Jakarta Sans', system-ui, sans-serif;
+    }
+
+    .stop-tagline {
+      font-size: 12px;
+      color: var(--soft);
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      font-family: 'Plus Jakarta Sans', system-ui, sans-serif;
+      margin-top: 1px;
+    }
+
+    .stop-chevron { color: #CCC; font-size: 18px; flex-shrink: 0; line-height: 1; }
+
+    /* ── STOP DETAIL ─────────────────────────── */
+    .detail-view { padding: 0 16px 28px; }
+
+    .detail-back {
+      display: flex;
+      align-items: center;
+      gap: 5px;
+      padding: 12px 0 10px;
+      font-family: 'Plus Jakarta Sans', system-ui, sans-serif;
+      font-size: 13px;
+      font-weight: 500;
+      color: var(--soft);
+      cursor: pointer;
+      border: none;
+      background: none;
+      transition: color 0.18s;
+    }
+    .detail-back:hover { color: var(--ink); }
+
+    .detail-tag {
+      display: inline-flex;
+      align-items: center;
+      padding: 3px 10px;
+      border-radius: 20px;
+      background: var(--paper);
+      border: 1px solid rgba(0,0,0,0.1);
+      font-family: 'Plus Jakarta Sans', system-ui, sans-serif;
+      font-size: 11px;
+      font-weight: 500;
+      color: var(--soft);
+      margin-bottom: 9px;
+    }
+
+    .detail-name {
+      font-family: 'Fraunces', Georgia, serif;
+      font-weight: 700;
+      font-size: 22px;
+      color: var(--ink);
+      line-height: 1.2;
+      margin-bottom: 4px;
+    }
+
+    .detail-meta {
+      font-family: 'Plus Jakarta Sans', system-ui, sans-serif;
+      font-size: 12px;
+      color: var(--soft);
+      margin-bottom: 14px;
+    }
+
+    .detail-divider {
+      height: 1px;
+      background: rgba(0,0,0,0.08);
+      margin: 14px 0;
+    }
+
+    .detail-desc {
+      font-family: 'Plus Jakarta Sans', system-ui, sans-serif;
+      font-size: 14px;
+      line-height: 1.72;
+      color: var(--soft);
+      margin-bottom: 16px;
+    }
+
+    .detail-things-header {
+      font-family: 'Plus Jakarta Sans', system-ui, sans-serif;
+      font-size: 11px;
+      font-weight: 700;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+      color: var(--ink);
+      margin-bottom: 10px;
+    }
+
+    .detail-things {
+      list-style: none;
+      margin-bottom: 22px;
+    }
+
+    .detail-things li {
+      font-family: 'Plus Jakarta Sans', system-ui, sans-serif;
+      font-size: 14px;
+      line-height: 1.65;
+      color: var(--soft);
+      padding-left: 16px;
+      position: relative;
+      margin-bottom: 8px;
+    }
+    .detail-things li::before {
+      content: '•';
+      position: absolute;
+      left: 0;
+      color: var(--amber);
+      font-weight: 700;
+    }
+
+    .detail-map-btns { display: flex; flex-direction: column; gap: 8px; }
+
+    .detail-map-btn {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 7px;
+      padding: 12px 16px;
+      border-radius: 10px;
+      font-family: 'Plus Jakarta Sans', system-ui, sans-serif;
+      font-size: 14px;
+      font-weight: 600;
+      color: white;
+      text-decoration: none;
+      transition: opacity 0.18s;
+    }
+    .detail-map-btn:hover { opacity: 0.88; }
+    .detail-map-btn.gmaps { background: #4285F4; }
+    .detail-map-btn.amaps { background: #111; }
+
+    /* ── DESKTOP ─────────────────────────────── */
+    @media (min-width: 768px) {
+      #map-wrapper { margin-right: 340px; }
+
+      #drawer {
+        position: fixed;
+        top: 110px;
+        right: 0;
+        bottom: 0;
+        left: auto !important;
+        width: 340px;
+        height: auto;
+        transform: none !important;
+        border-radius: 0;
+        border-left: 1px solid rgba(0,0,0,0.09);
+        box-shadow: -3px 0 16px rgba(0,0,0,0.07);
+      }
+
+      .drawer-handle { display: none; }
+      .drawer-handle-area { cursor: default; }
+
+      #legend {
+        bottom: 16px;
+        left: 12px;
+      }
+
+      .leaflet-top.leaflet-right {
+        top: 10px !important;
+        bottom: auto !important;
+      }
+    }
+  </style>
+</head>
+<body>
+<div id="app">
+
+  <!-- HEADER -->
+  <header id="header">
+    <div class="header-title">
+      <h1>Bavaria · July 2026</h1>
+      <p>Jonty &amp; Paige · 15–20 July</p>
+    </div>
+    <div class="header-actions">
+      <a id="btn-gmaps" class="nav-btn" href="#" target="_blank" rel="noopener noreferrer">🗺 Google Maps</a>
+      <a id="btn-amaps" class="nav-btn" href="#" target="_blank" rel="noopener noreferrer">🍎 Apple Maps</a>
+    </div>
+  </header>
+
+  <!-- DAY PILLS -->
+  <div id="day-pills"></div>
+
+  <!-- MAP -->
+  <div id="map-wrapper">
+    <div id="map"></div>
+
+    <div id="loading-indicator">
+      <div class="spinner" id="spinner"></div>
+      <span id="loading-text">Loading routes…</span>
+    </div>
+
+    <div id="legend">
+      <div class="legend-item"><div class="leg-base"></div><span>Overnight base</span></div>
+      <div class="legend-item"><div class="leg-stop"></div><span>Day stop</span></div>
+      <div class="legend-item"><div class="leg-dash"></div><span>Scenic Alpenstraße</span></div>
+    </div>
+  </div>
+
+  <!-- DRAWER -->
+  <div id="drawer">
+    <div class="drawer-handle-area" id="drawer-handle">
+      <div class="drawer-handle"></div>
+      <div class="drawer-peek-info">
+        <span id="drawer-day-label">All Days</span>
+        <span id="drawer-stop-count">· tap to explore</span>
+      </div>
+    </div>
+    <div class="drawer-content" id="drawer-content"></div>
+  </div>
+
+</div><!-- #app -->
+
+<script>
+/* ═══════════════════════════════════════════
+   TRIP DATA
+═══════════════════════════════════════════ */
+const TRIP = {
+  days: [
+    {
+      id: 0,
+      label: 'Night 0',
+      date: '15 Jul',
+      pillLabel: 'Night 0',
+      color: '#94A3B8',
+      gmapsRoute: 'https://www.google.com/maps/dir/Munich+Airport,+Germany',
+      amapsRoute: 'https://maps.apple.com/?daddr=48.3519,11.8293',
+      stops: [
+        {
+          id: 'muc-in',
+          name: 'Munich Airport',
+          lat: 48.3519, lng: 11.8293,
+          isBase: true,
+          tag: 'Transit',
+          tagline: 'Fly in. Sleep. Car at 8am.',
+          desc: 'Land, check in to the NH Hotel (airside — no shuttle needed), and sleep. Collect the hire car at 8am on the 16th.',
+          things: [
+            'NH Hotel Munich Airport is walkable from arrivals — no transfers',
+            'Pre-book hire car online: Sixt or Europcar from the terminal',
+            'Leave by 8am on the 16th to get the most out of your birthday'
+          ]
+        }
+      ]
+    },
+    {
+      id: 1,
+      label: 'Day 1 — Birthday 🎂',
+      date: '16 Jul',
+      pillLabel: 'Day 1 🎂',
+      color: '#60A5FA',
+      gmapsRoute: 'https://www.google.com/maps/dir/48.3519,11.8293/47.9102,11.3122/47.4649,11.122/47.4919,11.0948',
+      amapsRoute: 'https://maps.apple.com/?saddr=48.3519,11.8293&daddr=47.4919,11.0948&dirflg=d',
+      stops: [
+        {
+          id: 'starnberg',
+          name: 'Lake Starnberg',
+          lat: 47.9102, lng: 11.3122,
+          isBase: false,
+          tag: 'Morning stop',
+          tagline: 'Coffee with the Alps behind you',
+          desc: 'A large, clear lake 30km south of Munich where Bavarian aristocracy used to summer. A perfect 45-minute birthday morning stop — pull up by the water, get a coffee, watch the Alps shimmer in the background.',
+          things: [
+            'Walk south along the promenade toward Schloss Berg — a cross in the water marks where King Ludwig II drowned in 1886',
+            "Swim at the north end if it's warm — clean, shallow, easy access",
+            'Several lakeside cafés for a good breakfast or coffee stop'
+          ]
+        },
+        {
+          id: 'partnach',
+          name: 'Partnachklamm Gorge',
+          lat: 47.4649, lng: 11.122,
+          isBase: false,
+          tag: 'Afternoon',
+          tagline: 'A wild gorge carved through solid rock',
+          desc: 'A narrow limestone gorge near Garmisch with waterfalls tumbling overhead and the rock sometimes barely a metre apart. One of the best things in the area. Takes about 45 minutes to walk through. Go before you park up for the night.',
+          things: [
+            '€5 entry — pay at the kiosk before the gorge entrance, 15-min walk from the Olympic ski stadium car park',
+            "Wear shoes you don't mind getting slightly wet — spray from the waterfalls",
+            'After the gorge, continue the loop back through the meadows — easy hour total'
+          ]
+        },
+        {
+          id: 'garmisch',
+          name: 'Garmisch-Partenkirchen',
+          lat: 47.4919, lng: 11.0948,
+          isBase: true,
+          tag: '🏠 Base · 2 nights',
+          tagline: 'Park up, walk to dinner, birthday done right',
+          desc: "Germany's premier mountain resort, sitting directly under the Zugspitze. Stay in the older Partenkirchen half for painted facades and proper Bavarian character. This is your birthday base — park up, wander down for drinks, walk to dinner.",
+          things: [
+            'Zum Wildschütz for pre-dinner birthday beers — classic Bavarian beer hall, open from midday Thursdays, game dishes, wood panels',
+            '4Eck Restaurant for birthday dinner — creative regional cooking, hidden summer garden. Book now at 4-eck.com',
+            'Werdenfelserei and Das Graseck are the best places to stay',
+            "Partenkirchen's Ludwigstraße is the nicest street for an evening wander"
+          ]
+        }
+      ]
+    },
+    {
+      id: 2,
+      label: 'Day 2',
+      date: '17 Jul',
+      pillLabel: 'Day 2',
+      color: '#4ADE80',
+      gmapsRoute: 'https://www.google.com/maps/dir/47.4919,11.0948/47.4211,10.9854/47.4562,10.9729/47.5576,10.7498/47.4919,11.0948',
+      amapsRoute: 'https://maps.apple.com/?saddr=47.4919,11.0948&daddr=47.4919,11.0948&dirflg=d',
+      stops: [
+        {
+          id: 'zugspitze',
+          name: 'Zugspitze',
+          lat: 47.4211, lng: 10.9854,
+          isBase: false,
+          tag: '🚂 Cogwheel Train',
+          tagline: "Germany's highest peak — by mountain railway",
+          desc: "The cogwheel train departs from the station behind Garmisch's main DB stop and tunnels through the mountain itself before emerging at the glacier at 2,650m. One of the most unusual railway journeys in Europe. Check the weather forecast the night before — pointless in cloud.",
+          things: [
+            'Walk from your hotel to Zugspitzbahnhof — 10 minutes from central Garmisch',
+            'Cogwheel train up (45 mins), cable car back down to Eibsee — about €75pp return',
+            'At the top: 360° views across Germany, Austria, Italy and Switzerland on a clear day',
+            'Arrive by 9:30am to get ahead of the tour bus crowds',
+            "Germany's highest point at 2,962m — worth the price on a clear day"
+          ]
+        },
+        {
+          id: 'eibsee',
+          name: 'Eibsee',
+          lat: 47.4562, lng: 10.9729,
+          isBase: false,
+          tag: '🏊 Lake',
+          tagline: 'Turquoise lake at the foot of the Zugspitze',
+          desc: 'The cable car back down from the Zugspitze lands at Eibsee — an impossibly clear, turquoise lake sitting right at the base of the mountain. Walk the 8km circuit or have lunch at the hotel terrace before the bus back to Garmisch.',
+          things: [
+            'The full lake circuit walk takes about 2 hours — beautiful and easy',
+            'Multiple swimming spots around the shore — cold but refreshing in July',
+            'Eibsee Hotel has a good terrace restaurant for lunch',
+            'Bus back to Garmisch runs regularly from the Eibsee stop'
+          ]
+        },
+        {
+          id: 'neuschwanstein',
+          name: 'Neuschwanstein + Marienbrücke',
+          lat: 47.5576, lng: 10.7498,
+          isBase: false,
+          tag: '🏰 Castle',
+          tagline: 'Skip the interior — the view is why you come',
+          desc: "Yes, it's busy. Yes, it's worth it. The real reason to come is Marienbrücke — the suspension bridge above the gorge directly behind the castle. Late afternoon light on the turrets is extraordinary. Skip the interior tour and walk straight up to the bridge instead.",
+          things: [
+            'Book tickets NOW at hohenschwangau.de — July slots sell out months ahead, often gone by 10am on the day',
+            '15-minute uphill walk from the ticket centre to the castle entrance',
+            'Walk another 15 minutes past the castle to reach Marienbrücke for the iconic view',
+            'Late afternoon (3–5pm) is the best light for photos from the bridge',
+            'Back to Garmisch via the B17 valley road — 45 minutes, very scenic'
+          ]
+        },
+        {
+          id: 'garmisch-n2',
+          name: 'Garmisch-Partenkirchen',
+          lat: 47.4924, lng: 11.0953,
+          isBase: true,
+          tag: '🏠 Base · Night 2',
+          tagline: 'Back to base — no agenda needed',
+          desc: "Back to your base after a big day. Dinner doesn't need planning — Garmisch has plenty of options without a reservation.",
+          things: [
+            'Gasthaus zur Schranne ("die Schranne") for a relaxed local dinner — atmospheric, no fuss',
+            'Augustinerkeller for an outdoor beer garden if the evening is warm',
+            "Get an early-ish night — Day 3 is the longest drive of the trip"
+          ]
+        }
+      ]
+    },
+    {
+      id: 3,
+      label: 'Day 3 — Alpenstraße',
+      date: '18 Jul',
+      pillLabel: 'Day 3',
+      color: '#A78BFA',
+      gmapsRoute: 'https://www.google.com/maps/dir/47.4919,11.0948/47.4419,11.2608/47.5734,11.3438/47.6325,11.3536/47.7078,11.7562/47.6057,12.9106',
+      amapsRoute: 'https://maps.apple.com/?saddr=47.4919,11.0948&daddr=47.6057,12.9106&dirflg=d',
+      stops: [
+        {
+          id: 'mittenwald',
+          name: 'Mittenwald',
+          lat: 47.4419, lng: 11.2608,
+          isBase: false,
+          tag: '☕ Coffee stop',
+          tagline: "Bavaria's most painted town",
+          desc: "Twenty minutes east of Garmisch, Mittenwald has the most elaborate Lüftlmalerei murals in Bavaria — almost every building is painted floor-to-ceiling. The Karwendel mountains rear up directly behind the rooftops. Worth an hour, no more.",
+          things: [
+            'Walk the Obermarkt — the main street lined with outdoor café tables and painted facades',
+            'Karwendelbahn cable car goes to 2,244m if the sky is clear (€37pp, open Wed–Sun) — dramatic views',
+            'Good coffee and pastries at Café Schreiber on the main square'
+          ]
+        },
+        {
+          id: 'walchensee',
+          name: 'Walchensee',
+          lat: 47.5734, lng: 11.3438,
+          isBase: false,
+          tag: '🏊 Alpine lake',
+          tagline: 'Your Lake Bohinj moment',
+          desc: 'One of the deepest and most dramatic alpine lakes in Bavaria. The B11 road runs right along the water with mountains dropping straight in on both sides. Stop, swim, eat. This is one of the best spontaneous hours of the trip.',
+          things: [
+            'The south shore (Südufer) has the best swimming spots — park at the small lay-bys along the road',
+            'Water is cold even in July but feels extraordinary after a warm drive',
+            'The small beer garden at the Walchensee Hotel has perfect lake views for lunch',
+            'This section of the B11 is the Alpenstraße route — the scenic overlay on the map shows you exactly where you are'
+          ]
+        },
+        {
+          id: 'kesselberg',
+          name: 'Kesselberg Pass',
+          lat: 47.6325, lng: 11.3536,
+          isBase: false,
+          tag: '🏔 Scenic viewpoint',
+          tagline: 'Five-minute stop, one of the best views of the trip',
+          desc: "The B11 climbs from Walchensee up and over the Kesselberg before dropping 200m to Kochelsee below. Pull over at the panorama viewpoint at the top — you'll see both lakes and the full sweep of the Alps behind you. Takes five minutes.",
+          things: [
+            'The Rastplatz is signed on the right at the top of the pass — easy pull-in',
+            "Famous among motorcyclists as one of Bavaria's best pass roads — nine hairpin bends on the descent",
+            'The Tatzlwurm waterfall is 20 minutes further east on the B307 if you have time'
+          ]
+        },
+        {
+          id: 'tegernsee',
+          name: 'Tegernsee — Bräustüberl',
+          lat: 47.7078, lng: 11.7562,
+          isBase: false,
+          tag: '🍺 Lunch',
+          tagline: 'The best beer garden stop of the whole trip',
+          desc: 'The Bräustüberl is the monastery brewery on the Tegernsee waterfront — beer brewed in the building behind you and piped directly to the taps. Sit outside, order a Masskrug, watch the lake. Very local, very Bavarian, very good.',
+          things: [
+            'Order the Tegernseer Spezial — the flagship lager, unfiltered and exceptional',
+            'Traditional food: Obatzda with pretzels, Weisswurst, Schnitzel',
+            'The former Benedictine abbey buildings next door are worth a look',
+            'Rottach-Egern (your night 4 base) is 5 minutes south along the lake'
+          ]
+        },
+        {
+          id: 'ramsau',
+          name: 'Ramsau bei Berchtesgaden',
+          lat: 47.6057, lng: 12.9106,
+          isBase: true,
+          tag: '🏠 Base · 1 night',
+          tagline: 'Quieter and prettier than Berchtesgaden town',
+          desc: 'Ramsau sits in its own valley off the main road, watched over by the jagged Reiteralpe peaks. The church by the Ramsauer Ache river with the Hochkalter mountain behind it is one of the most photographed scenes in Bavaria. Quieter and more beautiful than the tourist town of Berchtesgaden 10 minutes away.',
+          things: [
+            'Berghotel Rehlegg is the best place to stay — excellent restaurant, within Berchtesgaden National Park',
+            'St. Sebastian church and the old packhorse bridge are a 5-minute walk from anywhere in the village',
+            'Königssee is 15 minutes away — set your alarm for the morning boat'
+          ]
+        }
+      ]
+    },
+    {
+      id: 4,
+      label: 'Day 4',
+      date: '19 Jul',
+      pillLabel: 'Day 4',
+      color: '#FB923C',
+      gmapsRoute: 'https://www.google.com/maps/dir/47.6057,12.9106/47.5903,12.9902/47.6300,13.0011/47.6892,11.7704',
+      amapsRoute: 'https://maps.apple.com/?saddr=47.6057,12.9106&daddr=47.6892,11.7704&dirflg=d',
+      stops: [
+        {
+          id: 'konigssee',
+          name: 'Königssee',
+          lat: 47.5903, lng: 12.9902,
+          isBase: false,
+          tag: '⛵ Boat trip',
+          tagline: "Go before 9am — it's a different place when empty",
+          desc: "A fjord-like lake hemmed in by 2,000m cliffs on both sides. The electric boats move in complete silence. The boatman stops mid-lake and plays a trumpet — the echo bouncing between the cliff walls is genuinely extraordinary. One of the best things in Bavaria.",
+          things: [
+            'Go at 8:30am — before the day-tripper buses arrive from Munich',
+            'Return ticket to St. Bartholomew about €20pp',
+            'St. Bartholomew church at the far end sits on a narrow peninsula completely surrounded by cliff and water — allow 45 minutes',
+            'The Obersee (a second lake further back) is a 20-minute walk from St. Bartholomew — spectacular waterfall at the far end'
+          ]
+        },
+        {
+          id: 'berchtesgaden',
+          name: 'Berchtesgaden',
+          lat: 47.6300, lng: 13.0011,
+          isBase: false,
+          tag: '🚶 Town',
+          tagline: 'Quick wander before heading west',
+          desc: 'The market town below the mountains — good for a coffee and a look around before the drive back to Tegernsee. Compact old town, good bakeries.',
+          things: [
+            'Bäckerei Holzner on the market square for excellent Bavarian pastries',
+            'The Marktplatz is the best bit — 15-minute wander is enough',
+            "No need to go up to Eagle's Nest unless specifically keen — 2-hour commitment, primarily of historical rather than scenic interest"
+          ]
+        },
+        {
+          id: 'rottach',
+          name: 'Rottach-Egern',
+          lat: 47.6892, lng: 11.7704,
+          isBase: true,
+          tag: '🏠 Base · Final night',
+          tagline: 'Best village on Tegernsee — make it count',
+          desc: 'Rottach-Egern sits at the quiet south end of the Tegernsee — flower boxes on every balcony, a waterfront promenade, proper old Bavarian atmosphere without being touristy. Last night. Lakeside dinner, cold beer, no rush.',
+          things: [
+            'Restaurant Überfahrt (1 Michelin star) for a special last dinner — book well ahead',
+            'For something relaxed: any of the terrace restaurants along the lakefront promenade',
+            'Evening stroll along the water — the Wallberg mountain to the south glows in the evening light',
+            'Bräustüberl Tegernsee is 5 minutes north along the lake for final-evening beers'
+          ]
+        }
+      ]
+    },
+    {
+      id: 5,
+      label: 'Day 5 ✈️',
+      date: '20 Jul',
+      pillLabel: 'Day 5 ✈️',
+      color: '#94A3B8',
+      gmapsRoute: 'https://www.google.com/maps/dir/Rottach-Egern,+Germany/Munich+Airport,+Germany',
+      amapsRoute: 'https://maps.apple.com/?saddr=47.6892,11.7704&daddr=48.3519,11.8293&dirflg=d',
+      stops: [
+        {
+          id: 'muc-out',
+          name: 'Munich Airport',
+          lat: 48.3519, lng: 11.8293,
+          isBase: false,
+          tag: '✈️ Flight 20:50',
+          tagline: 'Leave Rottach-Egern by 3pm',
+          desc: 'An hour and fifteen minutes to the airport on the A8 motorway. Leave by 3pm to be comfortable. Drop the hire car at the terminal, check in, done.',
+          things: [
+            'A8 motorway from Holzkirchen — direct, 1hr 15 in normal traffic',
+            'Allow 20 minutes for the hire car return process at the terminal',
+            'Aim to be at departures by 5:30pm for a 20:50 flight',
+            'Paulaner am Flughafen in Terminal 2 for a final Bavarian beer airside'
+          ]
+        }
+      ]
+    }
+  ],
+
+  scenicRoute: [
+    [47.4419, 11.2608], [47.4650, 11.3100], [47.5200, 11.3200],
+    [47.5734, 11.3438], [47.6325, 11.3536], [47.6500, 11.3900],
+    [47.6700, 11.5500], [47.6800, 11.6800], [47.7078, 11.7562],
+    [47.6892, 11.7704], [47.7000, 11.9000], [47.6800, 12.1000],
+    [47.6700, 12.2500], [47.6500, 12.4500], [47.6400, 12.6500],
+    [47.6200, 12.7800], [47.6057, 12.9106]
+  ]
+};
+
+/* ═══════════════════════════════════════════
+   STATE
+═══════════════════════════════════════════ */
+let activeDayId = 'all';
+let drawerState  = 'peek';
+let map;
+
+// keyed by day.id (number)
+const routeLayers  = {};
+// keyed by stop.id (string)
+const markerLayers = {};
+// keyed by day.id → L.LatLngBounds
+const dayBounds    = {};
+
+/* ═══════════════════════════════════════════
+   MAP INIT
+═══════════════════════════════════════════ */
+function initMap() {
+  map = L.map('map', {
+    center: [47.65, 11.6],
+    zoom: 8,
+    zoomControl: false
+  });
+
+  L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+    attribution: '© <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>',
+    maxZoom: 19
+  }).addTo(map);
+
+  L.control.zoom({ position: 'topright' }).addTo(map);
+
+  map.on('click', () => {
+    if (drawerState === 'expanded') setDrawerState('peek');
+  });
+}
+
+/* ═══════════════════════════════════════════
+   OSRM ROUTE FETCH
+═══════════════════════════════════════════ */
+async function fetchRoadRoute(waypoints) {
+  const coords = waypoints.map(w => `${w[1]},${w[0]}`).join(';');
+  const url = `https://router.project-osrm.org/route/v1/driving/${coords}?overview=full&geometries=geojson`;
+  try {
+    const res  = await fetch(url, { signal: AbortSignal.timeout(10000) });
+    const data = await res.json();
+    if (data.code === 'Ok' && data.routes?.[0]) {
+      return data.routes[0].geometry.coordinates.map(c => [c[1], c[0]]);
+    }
+  } catch (_) { /* silent fallback */ }
+  return waypoints;
+}
+
+/* ═══════════════════════════════════════════
+   MARKER ICONS
+═══════════════════════════════════════════ */
+function makeBaseIcon() {
+  return L.divIcon({
+    className: '',
+    html: '<div class="base-marker">🏠</div>',
+    iconSize: [38, 38],
+    iconAnchor: [19, 38],
+    popupAnchor: [0, -40]
+  });
+}
+
+function makeStopIcon(num, color) {
+  return L.divIcon({
+    className: '',
+    html: `<div class="stop-marker" style="border-color:${color};color:${color}">${num}</div>`,
+    iconSize: [28, 28],
+    iconAnchor: [14, 28],
+    popupAnchor: [0, -30]
+  });
+}
+
+/* ═══════════════════════════════════════════
+   RENDER MAP CONTENT
+═══════════════════════════════════════════ */
+async function renderMap() {
+  const routePromises = TRIP.days.map(async day => {
+    const coords = day.stops.map(s => [s.lat, s.lng]);
+    dayBounds[day.id] = L.latLngBounds(coords);
+
+    // Route polyline (only for multi-stop days)
+    if (coords.length >= 2) {
+      const routeCoords = await fetchRoadRoute(coords);
+      const poly = L.polyline(routeCoords, {
+        color:   day.color,
+        weight:  5,
+        opacity: 0.85,
+        lineCap:  'round',
+        lineJoin: 'round'
+      }).addTo(map);
+      routeLayers[day.id] = poly;
+    }
+
+    // Markers
+    let stopNum = 1;
+    day.stops.forEach(stop => {
+      const icon   = stop.isBase ? makeBaseIcon() : makeStopIcon(stopNum, day.color);
+      if (!stop.isBase) stopNum++;
+
+      const marker = L.marker([stop.lat, stop.lng], {
+        icon,
+        zIndexOffset: stop.isBase ? 1000 : 0
+      });
+
+      marker.on('click', e => {
+        L.DomEvent.stopPropagation(e);
+        openStopDetail(stop, day);
+      });
+
+      marker.addTo(map);
+      markerLayers[stop.id] = { marker, dayId: day.id };
+    });
+  });
+
+  await Promise.allSettled(routePromises);
+
+  // Scenic Alpenstraße overlay — drawn last so it sits on top
+  L.polyline(TRIP.scenicRoute, {
+    color:     '#FBBF24',
+    weight:    3,
+    opacity:   0.9,
+    dashArray: '8 5',
+    lineCap:   'round',
+    lineJoin:  'round'
+  }).addTo(map);
+
+  // Done loading
+  const loadEl   = document.getElementById('loading-indicator');
+  const spinEl   = document.getElementById('spinner');
+  const textEl   = document.getElementById('loading-text');
+  spinEl.style.display = 'none';
+  textEl.textContent   = '✓ Routes loaded';
+  loadEl.classList.add('done');
+  setTimeout(() => {
+    loadEl.classList.add('hidden');
+    setTimeout(() => { loadEl.style.display = 'none'; }, 420);
+  }, 1600);
+}
+
+/* ═══════════════════════════════════════════
+   DAY PILLS
+═══════════════════════════════════════════ */
+function renderPills() {
+  const container = document.getElementById('day-pills');
+  container.innerHTML = '';
+
+  // "All" pill
+  const allPill = makePill(
+    'All', '#1A1A1A', activeDayId === 'all',
+    () => selectDay('all')
+  );
+  container.appendChild(allPill);
+
+  TRIP.days.forEach(day => {
+    const active = activeDayId === day.id;
+    const pill   = makePill(day.pillLabel, day.color, active, () => selectDay(day.id));
+    container.appendChild(pill);
+    if (active) setTimeout(() => pill.scrollIntoView({ behavior: 'smooth', block: 'nearest', inline: 'center' }), 50);
+  });
+}
+
+function makePill(label, color, active, onClick) {
+  const btn = document.createElement('button');
+  btn.className = 'pill' + (active ? ' active' : '');
+  btn.style.borderColor = active ? color : 'transparent';
+
+  const dot = document.createElement('span');
+  dot.className        = 'pill-dot';
+  dot.style.background = color;
+  btn.appendChild(dot);
+  btn.appendChild(document.createTextNode(label));
+  btn.addEventListener('click', onClick);
+  return btn;
+}
+
+/* ═══════════════════════════════════════════
+   SELECT DAY
+═══════════════════════════════════════════ */
+function selectDay(dayId) {
+  activeDayId = dayId;
+  renderPills();
+  applyDayFilter();
+  updateNavButtons();
+  updatePeekInfo();
+  renderStopList();
+}
+
+function applyDayFilter() {
+  // Route polylines
+  Object.entries(routeLayers).forEach(([id, poly]) => {
+    const match = activeDayId === 'all' || Number(id) === activeDayId;
+    poly.setStyle({ opacity: match ? 0.85 : 0.08 });
+  });
+
+  // Markers
+  Object.values(markerLayers).forEach(({ marker, dayId }) => {
+    const el    = marker.getElement();
+    const match = activeDayId === 'all' || dayId === activeDayId;
+    if (el) el.style.opacity = match ? '1' : '0.12';
+  });
+
+  // Fit bounds
+  if (activeDayId !== 'all' && dayBounds[activeDayId]) {
+    map.fitBounds(dayBounds[activeDayId], { padding: [60, 60], maxZoom: 13 });
+  } else {
+    map.setView([47.65, 11.6], 8);
+  }
+}
+
+/* ═══════════════════════════════════════════
+   HEADER NAV BUTTONS
+═══════════════════════════════════════════ */
+function updateNavButtons() {
+  const day = activeDayId === 'all'
+    ? TRIP.days[1]
+    : TRIP.days.find(d => d.id === activeDayId);
+  if (!day) return;
+  document.getElementById('btn-gmaps').href = day.gmapsRoute;
+  document.getElementById('btn-amaps').href = day.amapsRoute;
+}
+
+/* ═══════════════════════════════════════════
+   DRAWER
+═══════════════════════════════════════════ */
+function setDrawerState(state) {
+  drawerState = state;
+  document.getElementById('drawer').classList.toggle('expanded', state === 'expanded');
+}
+
+function updatePeekInfo() {
+  const labelEl = document.getElementById('drawer-day-label');
+  const countEl = document.getElementById('drawer-stop-count');
+
+  if (activeDayId === 'all') {
+    const n = TRIP.days.reduce((s, d) => s + d.stops.length, 0);
+    labelEl.textContent = 'All Days';
+    countEl.textContent = `· ${n} stops · tap to explore`;
+  } else {
+    const day = TRIP.days.find(d => d.id === activeDayId);
+    if (day) {
+      labelEl.textContent = day.label;
+      countEl.textContent = `· ${day.stops.length} stops · tap to explore`;
+    }
+  }
+}
+
+/* ═══════════════════════════════════════════
+   STOP LIST
+═══════════════════════════════════════════ */
+const DAY_TINTS = {
+  0: '#F1F5F9',
+  1: '#EFF6FF',
+  2: '#F0FDF4',
+  3: '#FAF5FF',
+  4: '#FFF7ED',
+  5: '#F1F5F9'
+};
+
+const DAY_DATE_LABELS = {
+  0: 'NIGHT 0 · 15 JULY',
+  1: 'DAY 1 · 16 JULY · BIRTHDAY 🎂',
+  2: 'DAY 2 · 17 JULY',
+  3: 'DAY 3 · 18 JULY · ALPENSTRASSE',
+  4: 'DAY 4 · 19 JULY',
+  5: 'DAY 5 · 20 JULY · DEPARTURE ✈️'
+};
+
+function renderStopList() {
+  const content = document.getElementById('drawer-content');
+  content.innerHTML = '';
+
+  const days = activeDayId === 'all'
+    ? TRIP.days
+    : TRIP.days.filter(d => d.id === activeDayId);
+
+  days.forEach(day => {
+    // Day group header
+    const header = document.createElement('div');
+    header.className        = 'day-group-header';
+    header.style.color      = day.color;
+    header.style.background = DAY_TINTS[day.id] || '#F9FAFB';
+    header.textContent      = DAY_DATE_LABELS[day.id] || `DAY ${day.id}`;
+    content.appendChild(header);
+
+    let stopNum = 1;
+    day.stops.forEach(stop => {
+      const row = document.createElement('div');
+      row.className = 'stop-row';
+
+      // Icon
+      const iconEl = document.createElement('div');
+      iconEl.className = 'stop-icon';
+      if (stop.isBase) {
+        iconEl.classList.add('stop-icon-base');
+        iconEl.textContent = '🏠';
+      } else {
+        iconEl.classList.add('stop-icon-num');
+        iconEl.style.borderColor = day.color;
+        iconEl.style.color       = day.color;
+        iconEl.textContent       = stopNum++;
+      }
+
+      // Info
+      const info    = document.createElement('div');
+      info.className = 'stop-info';
+
+      const nameEl = document.createElement('div');
+      nameEl.className   = 'stop-name';
+      nameEl.textContent = stop.name;
+
+      const tagEl = document.createElement('div');
+      tagEl.className   = 'stop-tagline';
+      tagEl.textContent = stop.tagline;
+
+      info.appendChild(nameEl);
+      info.appendChild(tagEl);
+
+      const chev = document.createElement('div');
+      chev.className   = 'stop-chevron';
+      chev.textContent = '›';
+
+      row.appendChild(iconEl);
+      row.appendChild(info);
+      row.appendChild(chev);
+
+      row.addEventListener('click', () => openStopDetail(stop, day));
+      content.appendChild(row);
+    });
+  });
+}
+
+/* ═══════════════════════════════════════════
+   STOP DETAIL
+═══════════════════════════════════════════ */
+function openStopDetail(stop, day) {
+  setDrawerState('expanded');
+
+  const content = document.getElementById('drawer-content');
+  content.innerHTML = '';
+
+  const view = document.createElement('div');
+  view.className = 'detail-view';
+
+  // Back button
+  const backBtn = document.createElement('button');
+  backBtn.className   = 'detail-back';
+  backBtn.textContent = '← Back to stops';
+  backBtn.addEventListener('click', () => {
+    renderStopList();
+    setDrawerState('expanded');
+  });
+  view.appendChild(backBtn);
+
+  // Tag chip
+  const tagEl = document.createElement('div');
+  tagEl.className   = 'detail-tag';
+  tagEl.textContent = stop.tag;
+  view.appendChild(tagEl);
+
+  // Name
+  const nameEl = document.createElement('h2');
+  nameEl.className   = 'detail-name';
+  nameEl.textContent = stop.name;
+  view.appendChild(nameEl);
+
+  // Meta
+  const metaEl = document.createElement('div');
+  metaEl.className   = 'detail-meta';
+  metaEl.textContent = `${day.label} · ${day.date}`;
+  view.appendChild(metaEl);
+
+  view.appendChild(divider());
+
+  // Description
+  const descEl = document.createElement('p');
+  descEl.className   = 'detail-desc';
+  descEl.textContent = stop.desc;
+  view.appendChild(descEl);
+
+  // Things
+  const thHeader = document.createElement('div');
+  thHeader.className   = 'detail-things-header';
+  thHeader.textContent = 'What to do / know';
+  view.appendChild(thHeader);
+
+  const ul = document.createElement('ul');
+  ul.className = 'detail-things';
+  stop.things.forEach(t => {
+    const li = document.createElement('li');
+    li.textContent = t;
+    ul.appendChild(li);
+  });
+  view.appendChild(ul);
+
+  // Map buttons
+  const gBtn = document.createElement('a');
+  gBtn.className = 'detail-map-btn gmaps';
+  gBtn.href      = `https://www.google.com/maps/search/?api=1&query=${stop.lat},${stop.lng}`;
+  gBtn.target    = '_blank';
+  gBtn.rel       = 'noopener noreferrer';
+  gBtn.textContent = '🗺 Open in Google Maps';
+
+  const aBtn = document.createElement('a');
+  aBtn.className = 'detail-map-btn amaps';
+  aBtn.href      = `https://maps.apple.com/?q=${stop.lat},${stop.lng}`;
+  aBtn.target    = '_blank';
+  aBtn.rel       = 'noopener noreferrer';
+  aBtn.textContent = '🍎 Open in Apple Maps';
+
+  const btnWrap = document.createElement('div');
+  btnWrap.className = 'detail-map-btns';
+  btnWrap.appendChild(gBtn);
+  btnWrap.appendChild(aBtn);
+  view.appendChild(btnWrap);
+
+  content.appendChild(view);
+  content.scrollTop = 0;
+
+  // Pan map to stop
+  map.panTo([stop.lat, stop.lng]);
+}
+
+function divider() {
+  const d = document.createElement('div');
+  d.className = 'detail-divider';
+  return d;
+}
+
+/* ═══════════════════════════════════════════
+   SWIPE / TOUCH GESTURES
+═══════════════════════════════════════════ */
+function initGestures() {
+  const handle  = document.getElementById('drawer-handle');
+  const content = document.getElementById('drawer-content');
+  let startY = 0;
+
+  handle.addEventListener('touchstart', e => { startY = e.touches[0].clientY; }, { passive: true });
+  handle.addEventListener('touchend', e => {
+    const dy = startY - e.changedTouches[0].clientY;
+    if      (dy >  60) setDrawerState('expanded');
+    else if (dy < -60) setDrawerState('peek');
+    else               setDrawerState(drawerState === 'peek' ? 'expanded' : 'peek');
+  }, { passive: true });
+
+  handle.addEventListener('click', () => {
+    setDrawerState(drawerState === 'peek' ? 'expanded' : 'peek');
+  });
+
+  // Swipe down in content when scrolled to top → collapse
+  content.addEventListener('touchstart', e => { startY = e.touches[0].clientY; }, { passive: true });
+  content.addEventListener('touchend', e => {
+    const dy = startY - e.changedTouches[0].clientY;
+    if (dy < -60 && content.scrollTop === 0) setDrawerState('peek');
+  }, { passive: true });
+}
+
+/* ═══════════════════════════════════════════
+   BOOTSTRAP
+═══════════════════════════════════════════ */
+function init() {
+  initMap();
+  renderPills();
+  updateNavButtons();
+  updatePeekInfo();
+  renderStopList();
+  initGestures();
+  renderMap(); // async — routes load in background
+}
+
+if (document.readyState === 'loading') {
+  document.addEventListener('DOMContentLoaded', init);
+} else {
+  init();
+}
+</script>
+</body>
+</html>
