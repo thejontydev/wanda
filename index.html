@@ -1,0 +1,419 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Wanda — Launches Soon</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800&family=Lora:ital,wght@1,400;1,500;1,600&display=swap" rel="stylesheet">
+<style>
+  *, *::before, *::after { box-sizing: border-box; }
+  html, body { margin: 0; padding: 0; height: 100%; }
+  body {
+    background: #FAF6EE;
+    font-family: "Outfit", -apple-system, BlinkMacSystemFont, sans-serif;
+    color: #1A1814;
+    -webkit-font-smoothing: antialiased;
+    text-rendering: optimizeLegibility;
+    overflow: hidden;
+  }
+  ::selection { background: #D9EFE7; }
+
+  /* ============ LANDING ============ */
+  .landing {
+    position: fixed; inset: 0;
+    display: flex; flex-direction: column;
+    align-items: center; justify-content: center;
+    text-align: center;
+    padding: 48px;
+    padding-bottom: max(48px, env(safe-area-inset-bottom, 48px));
+    transition: opacity .55s cubic-bezier(0.22, 1, 0.36, 1), transform .6s cubic-bezier(0.22, 1, 0.36, 1);
+  }
+  .landing.gone { opacity: 0; transform: scale(.97); pointer-events: none; }
+
+  /* faint drifting topographic contour backdrop */
+  .bg-topo {
+    position: absolute; inset: 0; width: 100%; height: 100%;
+    pointer-events: none; opacity: .5;
+  }
+  .bg-topo path {
+    stroke: #1FA882; stroke-width: 1; fill: none; opacity: .15;
+    animation: drift 22s ease-in-out infinite alternate;
+  }
+  .bg-topo path:nth-child(2) { animation-delay: -4s; }
+  .bg-topo path:nth-child(3) { animation-delay: -8s; }
+  .bg-topo path:nth-child(4) { animation-delay: -12s; }
+  .bg-topo path:nth-child(5) { animation-delay: -16s; }
+  .bg-topo path:nth-child(6) { animation-delay: -20s; }
+  @keyframes drift { to { transform: translateY(-16px); } }
+
+  .stack {
+    position: relative; z-index: 2;
+    display: flex; flex-direction: column; align-items: center;
+    width: 100%;
+  }
+
+  .mark {
+    height: clamp(44px, 8vw, 64px); width: auto; margin-bottom: 36px;
+    animation: rise .9s cubic-bezier(0.22, 1, 0.36, 1) both;
+  }
+
+  .eyebrow {
+    font-family: "Outfit", sans-serif; font-weight: 600;
+    font-size: 11px; letter-spacing: .22em; text-transform: uppercase;
+    color: #6E6A61; margin-bottom: 18px;
+    display: flex; align-items: center; gap: 10px;
+    animation: rise .9s cubic-bezier(0.22, 1, 0.36, 1) .06s both;
+  }
+  .eyebrow .dot {
+    width: 6px; height: 6px; border-radius: 50%; background: #1FA882;
+    animation: blink 2.4s ease-in-out infinite;
+  }
+  @keyframes blink { 0%, 100% { opacity: 1; } 50% { opacity: .2; } }
+
+  h1 {
+    font-family: "Outfit", sans-serif; font-weight: 600;
+    font-size: clamp(32px, 6vw, 80px);
+    line-height: 1; letter-spacing: -.03em;
+    color: #1A1814;
+    margin: 0 0 20px; max-width: 14ch;
+    text-wrap: balance;
+    animation: rise 1s cubic-bezier(0.22, 1, 0.36, 1) .12s both;
+  }
+
+  .sub {
+    font-family: "Outfit", sans-serif; font-weight: 400;
+    font-size: clamp(16px, 1.7vw, 21px); line-height: 1.5;
+    color: #6E6A61; margin: 0 0 40px; max-width: 36ch;
+    text-wrap: balance;
+    animation: rise 1s cubic-bezier(0.22, 1, 0.36, 1) .20s both;
+  }
+
+  @keyframes rise {
+    from { opacity: 0; transform: translateY(18px); }
+    to   { opacity: 1; transform: none; }
+  }
+
+  /* ============ BUTTON ============ */
+  .cta {
+    position: relative; z-index: 2; overflow: hidden;
+    font-family: "Outfit", sans-serif; font-weight: 600; font-size: 17px;
+    letter-spacing: -.01em; color: #fff; white-space: nowrap;
+    background: #1FA882; border: none; cursor: pointer;
+    padding: 18px 36px 18px 32px; border-radius: 999px;
+    display: inline-flex; align-items: center; gap: 12px;
+    box-shadow: 0 6px 24px rgba(31,168,130,.38), 0 1px 0 rgba(255,255,255,.22) inset;
+    transition: transform .25s cubic-bezier(0.22, 1, 0.36, 1),
+                box-shadow .25s cubic-bezier(0.22, 1, 0.36, 1),
+                background .2s;
+    animation: rise 1s cubic-bezier(0.22, 1, 0.36, 1) .28s both,
+               glow 3s ease-in-out 1.3s infinite;
+    -webkit-tap-highlight-color: transparent;
+  }
+  .cta:hover {
+    transform: translateY(-2px);
+    background: #18886A;
+    box-shadow: 0 12px 36px rgba(31,168,130,.46), 0 1px 0 rgba(255,255,255,.22) inset;
+  }
+  .cta:active { transform: translateY(0) scale(.985); }
+
+  @keyframes glow {
+    0%, 100% { box-shadow: 0 6px 24px rgba(31,168,130,.32), 0 1px 0 rgba(255,255,255,.22) inset; }
+    50%       { box-shadow: 0 8px 32px rgba(31,168,130,.56), 0 1px 0 rgba(255,255,255,.22) inset; }
+  }
+
+  /* shimmer sweep */
+  .cta::before {
+    content: ""; position: absolute; top: 0; left: -60%; width: 45%; height: 100%;
+    background: linear-gradient(105deg, transparent, rgba(255,255,255,.44), transparent);
+    transform: skewX(-18deg);
+    animation: sweep 3.5s ease-in-out 1.8s infinite;
+  }
+  @keyframes sweep { 0% { left: -60%; } 38%, 100% { left: 140%; } }
+
+  .cta .plane { display: inline-flex; transition: transform .3s cubic-bezier(0.22, 1, 0.36, 1); }
+  .cta:hover .plane { transform: translate(4px, -3px) rotate(8deg); }
+
+  /* ============ JOURNEY OVERLAY ============ */
+  .journey {
+    position: fixed; inset: 0; z-index: 30;
+    background: #1A1814;
+    opacity: 0; pointer-events: none;
+    transition: opacity .6s cubic-bezier(0.22, 1, 0.36, 1);
+    overflow: hidden;
+  }
+  .journey.open { opacity: 1; pointer-events: auto; }
+
+  .sky { position: absolute; inset: 0; width: 100%; height: 100%; }
+
+  /* star twinkle */
+  .star { fill: #FAF6EE; animation: twinkle 3s ease-in-out infinite; }
+  @keyframes twinkle { 0%, 100% { opacity: .12; } 50% { opacity: .65; } }
+
+  /* contour terrain draw-in */
+  .contour {
+    stroke: #1FA882; stroke-width: 1; fill: none; opacity: 0;
+    stroke-dasharray: 2400; stroke-dashoffset: 2400;
+  }
+  .journey.draw .contour {
+    opacity: .13;
+    transition: stroke-dashoffset 2.6s cubic-bezier(0.22, 1, 0.36, 1), opacity .9s ease;
+    stroke-dashoffset: 0;
+  }
+
+  /* flight arc */
+  .arc {
+    stroke: #1FA882; stroke-width: 2.5; fill: none;
+    stroke-linecap: round; stroke-dasharray: 6 12;
+    stroke-dashoffset: 1700; opacity: 0;
+  }
+  .journey.draw .arc {
+    opacity: .85;
+    transition: stroke-dashoffset 2.2s linear .3s, opacity .5s ease .3s;
+    stroke-dashoffset: 0;
+  }
+
+  /* location pins */
+  .pin { opacity: 0; transition: opacity .5s ease; }
+  .journey.draw .pin { opacity: 1; }
+  .pin-ring {
+    transform-box: fill-box; transform-origin: center;
+    animation: ping 2.2s ease-out infinite;
+  }
+  @keyframes ping { 0% { transform: scale(.4); opacity: .8; } 100% { transform: scale(2.6); opacity: 0; } }
+
+  /* paper plane along arc */
+  .plane-g { opacity: 0; }
+  .journey.draw .plane-g { opacity: 1; transition: opacity .3s ease .4s; }
+  .journey.arrived .plane-g { opacity: 0; transition: opacity .5s ease; }
+
+  /* ============ REVEAL ============ */
+  .reveal {
+    position: absolute; inset: 0; z-index: 3;
+    display: flex; flex-direction: column;
+    align-items: center; justify-content: center;
+    text-align: center; padding: 48px;
+    opacity: 0; transform: translateY(16px);
+    transition: opacity .9s cubic-bezier(0.22, 1, 0.36, 1), transform .9s cubic-bezier(0.22, 1, 0.36, 1);
+    pointer-events: none;
+  }
+  .journey.arrived .reveal { opacity: 1; transform: none; pointer-events: auto; }
+
+  .reveal .mark { height: 44px; margin-bottom: 32px; }
+
+  .reveal .planning {
+    font-family: "Lora", Georgia, serif; font-style: italic; font-weight: 500;
+    font-size: clamp(24px, 3.4vw, 44px); line-height: 1.2;
+    color: #FAF6EE; margin: 0 0 20px; max-width: 20ch;
+    text-wrap: balance;
+  }
+
+  .reveal .soon {
+    font-family: "Outfit", sans-serif; font-weight: 500;
+    font-size: clamp(14px, 1.4vw, 17px); letter-spacing: .04em;
+    color: rgba(250,246,238,.5); margin: 0;
+  }
+  .reveal .soon b { color: #1FA882; font-weight: 600; }
+
+  .replay {
+    position: absolute;
+    bottom: max(32px, env(safe-area-inset-bottom, 32px));
+    left: 50%; transform: translateX(-50%);
+    font-family: "Outfit", sans-serif; font-weight: 500; font-size: 13px;
+    color: rgba(250,246,238,.36); background: none; border: none; cursor: pointer;
+    display: inline-flex; align-items: center; gap: 7px;
+    opacity: 0; transition: opacity .6s ease 1.4s, color .2s;
+    white-space: nowrap; -webkit-tap-highlight-color: transparent;
+    padding: 8px 12px;
+  }
+  .journey.arrived .replay { opacity: 1; }
+  .replay:hover { color: rgba(250,246,238,.75); }
+
+  /* ============ MOBILE ============ */
+  @media (max-width: 600px) {
+    .landing { padding: 28px; padding-bottom: max(28px, env(safe-area-inset-bottom, 28px)); }
+    .mark { height: clamp(40px, 11vw, 52px); margin-bottom: 28px; }
+    h1 { font-size: clamp(30px, 8vw, 48px); margin-bottom: 16px; line-height: 1.02; }
+    .sub { font-size: 16px; margin-bottom: 32px; max-width: 28ch; }
+    .cta { font-size: 16px; padding: 16px 28px 16px 24px; gap: 10px; }
+    .reveal { padding: 32px 28px; padding-bottom: max(80px, env(safe-area-inset-bottom, 80px)); }
+    .reveal .mark { height: clamp(36px, 10vw, 48px); margin-bottom: 24px; }
+    .reveal .planning { font-size: clamp(22px, 6vw, 36px); }
+    .reveal .soon { font-size: 15px; }
+  }
+
+  @media (max-width: 380px) {
+    h1 { font-size: 28px; }
+    .cta { font-size: 15px; padding: 14px 22px 14px 20px; }
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    .bg-topo path, .cta, .cta::before, .star, .pin-ring { animation: none !important; }
+  }
+</style>
+</head>
+<body>
+
+<!-- ===================== LANDING ===================== -->
+<main class="landing" id="landing">
+  <svg class="bg-topo" viewBox="0 0 1440 900" preserveAspectRatio="xMidYMid slice" aria-hidden="true">
+    <path d="M-60,160 Q280,90 640,185 Q1000,275 1500,155"/>
+    <path d="M-60,270 Q310,195 660,290 Q1010,385 1500,258"/>
+    <path d="M-60,390 Q340,305 680,405 Q1020,505 1500,380"/>
+    <path d="M-60,520 Q360,425 700,520 Q1040,618 1500,500"/>
+    <path d="M-60,660 Q385,555 725,648 Q1065,740 1500,635"/>
+    <path d="M-60,800 Q405,695 745,780 Q1085,862 1500,780"/>
+  </svg>
+
+  <div class="stack">
+    <!-- Jade logo (inline SVG) -->
+    <svg class="mark" viewBox="0 0 371.85 140.82" xmlns="http://www.w3.org/2000/svg" aria-label="Wanda">
+      <path d="M371.81,107.88,359.1,46.72a20,20,0,0,0-19.58-15.93H333a20,20,0,0,0-19.56,15.93q-6.4,30.78-12.8,61.53a15.2,15.2,0,0,1-14.88,12.1H189.13a3.49,3.49,0,0,1-3.5-3.5V79.48a.56.56,0,0,1,.55-.56.54.54,0,0,1,.5.31l15.55,30.23a1.5,1.5,0,0,0,1.34.82h23.7a1.5,1.5,0,0,0,1.5-1.5V19a19,19,0,0,0-19-19H104.62A38,38,0,0,0,66.7,35.47L64.61,66.81a.5.5,0,0,1-.5.46.5.5,0,0,1-.49-.42L58.49,32.07A1.49,1.49,0,0,0,57,30.79H35.43a1.52,1.52,0,0,0-1.5,1.3L29.32,66.71a.64.64,0,0,1-1.27,0L25,32.16a1.51,1.51,0,0,0-1.5-1.37h-22A1.52,1.52,0,0,0,0,32.47L9.5,109a1.51,1.51,0,0,0,1.5,1.31H38.85A1.5,1.5,0,0,0,40.33,109l4.84-30.48a.6.6,0,0,1,1.19,0l5.7,30.53a1.5,1.5,0,0,0,1.47,1.23H81.41a1.49,1.49,0,0,0,1.48-1.34q4-37.32,8-74.63A15.19,15.19,0,0,1,106,20.72h94.74a3.51,3.51,0,0,1,3.51,3.5V62.71a.48.48,0,0,1-.47.47.45.45,0,0,1-.43-.27L188.73,31.66a1.52,1.52,0,0,0-1.37-.87H162.81a1.5,1.5,0,0,0-1.5,1.51v89.52a19,19,0,0,0,19,19H288.7a38,38,0,0,0,37.13-29.88l2.48-11.36a2,2,0,0,1,2-1.58h11a2,2,0,0,1,2,1.58l1.89,9.1a2,2,0,0,0,2,1.6h22.79A2,2,0,0,0,371.81,107.88Zm-33.26-26.4H333a2,2,0,0,1-2-2.37l4.51-24a.3.3,0,0,1,.29-.25.3.3,0,0,1,.31.25l4.39,24A2,2,0,0,1,338.55,81.48Z" fill="#1fa882"/>
+      <path d="M293.87,40.65q-8.44-9.85-28.8-9.86h-30a1.5,1.5,0,0,0-1.5,1.5v76.49a1.5,1.5,0,0,0,1.5,1.5h29.35q37.89,0,37.89-41.47Q302.32,50.38,293.87,40.65ZM272.49,85.83q-1.92,4.48-8.44,4.48h-1.7a1.5,1.5,0,0,1-1.5-1.5V53.16a1.5,1.5,0,0,1,1.5-1.5h1.18q6.66,0,8.71,4.48T274.41,71Q274.41,81.36,272.49,85.83Z" fill="#1fa882"/>
+      <path d="M127,59.68a4.59,4.59,0,1,1-4.59-4.61A4.58,4.58,0,0,1,127,59.68Z" fill="#1fa882"/>
+      <path d="M157.91,107.88l-12.7-61.15a20,20,0,0,0-19.59-15.94h-6.49A20,20,0,0,0,99.55,46.73L86.84,107.88a2,2,0,0,0,2,2.4h21.66a2,2,0,0,0,2-1.57l2-9.14a2,2,0,0,1,2-1.57h11a2,2,0,0,1,2,1.58l1.89,9.11a2,2,0,0,0,2,1.59H156A2,2,0,0,0,157.91,107.88ZM131.56,65l-8.28,14.33a1,1,0,0,1-1.8,0L113.19,65a10.76,10.76,0,0,1-1.42-5.3A10.61,10.61,0,1,1,131.56,65Z" fill="#1fa882"/>
+      <path d="M127,59.68a4.59,4.59,0,1,1-4.59-4.61A4.58,4.58,0,0,1,127,59.68Z" fill="#1fa882"/>
+    </svg>
+
+    <div class="eyebrow"><span class="dot"></span>Coming 2026</div>
+    <h1>The travel destination decision engine</h1>
+    <p class="sub">Other tools start with a destination. We start with you.</p>
+
+    <button class="cta" id="cta">
+      Launches Soon
+      <span class="plane" aria-hidden="true">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none">
+          <path d="M22 2L11 13M22 2l-7 20-4-9-9-4 20-7z" stroke="#fff" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/>
+        </svg>
+      </span>
+    </button>
+  </div>
+</main>
+
+<!-- ===================== JOURNEY OVERLAY ===================== -->
+<div class="journey" id="journey" aria-hidden="true">
+  <svg class="sky" viewBox="0 0 1440 900" preserveAspectRatio="xMidYMid slice">
+    <defs>
+      <filter id="glow-filter" x="-60%" y="-60%" width="220%" height="220%">
+        <feGaussianBlur stdDeviation="3.5" result="blur"/>
+        <feMerge><feMergeNode in="blur"/><feMergeNode in="SourceGraphic"/></feMerge>
+      </filter>
+    </defs>
+
+    <!-- stars (populated via JS) -->
+    <g id="stars"></g>
+
+    <!-- contour terrain -->
+    <g>
+      <path class="contour" d="M-60,560 Q320,465 680,555 Q1040,645 1500,535"/>
+      <path class="contour" d="M-60,660 Q340,560 700,648 Q1060,738 1500,638"/>
+      <path class="contour" d="M-60,770 Q360,665 720,752 Q1080,840 1500,755"/>
+    </g>
+
+    <!-- flight arc -->
+    <path id="arc" class="arc" d="M 220 720 Q 720 85 1230 240"/>
+
+    <!-- origin pin (departure) -->
+    <g class="pin" id="pin-origin">
+      <circle class="pin-ring" cx="220" cy="720" r="9" fill="none" stroke="#1FA882" stroke-width="2"/>
+      <circle cx="220" cy="720" r="5.5" fill="#1FA882"/>
+    </g>
+
+    <!-- destination pin (arrival) -->
+    <g class="pin" id="pin-dest">
+      <circle class="pin-ring" cx="1230" cy="240" r="9" fill="none" stroke="#1FA882" stroke-width="2" style="animation-delay:.8s"/>
+      <circle cx="1230" cy="240" r="5.5" fill="#1FA882"/>
+    </g>
+
+    <!-- paper plane following the arc -->
+    <g class="plane-g" filter="url(#glow-filter)">
+      <g id="plane-icon">
+        <path d="M16,0 L-10,-9 L-3,0 L-10,9 Z" fill="#FAF6EE"/>
+      </g>
+      <animateMotion
+        id="planeMotion"
+        dur="2.2s"
+        begin="indefinite"
+        fill="freeze"
+        rotate="auto"
+        keyPoints="0;1"
+        keyTimes="0;1"
+        calcMode="spline"
+        keySplines="0.4 0 0.2 1">
+        <mpath href="#arc"/>
+      </animateMotion>
+    </g>
+  </svg>
+
+  <!-- reveal content -->
+  <div class="reveal">
+    <!-- Paper (cream) logo for dark background -->
+    <svg class="mark" viewBox="0 0 371.85 140.82" xmlns="http://www.w3.org/2000/svg" aria-label="Wanda">
+      <path d="M371.81,107.88,359.1,46.72a20,20,0,0,0-19.58-15.93H333a20,20,0,0,0-19.56,15.93q-6.4,30.78-12.8,61.53a15.2,15.2,0,0,1-14.88,12.1H189.13a3.49,3.49,0,0,1-3.5-3.5V79.48a.56.56,0,0,1,.55-.56.54.54,0,0,1,.5.31l15.55,30.23a1.5,1.5,0,0,0,1.34.82h23.7a1.5,1.5,0,0,0,1.5-1.5V19a19,19,0,0,0-19-19H104.62A38,38,0,0,0,66.7,35.47L64.61,66.81a.5.5,0,0,1-.5.46.5.5,0,0,1-.49-.42L58.49,32.07A1.49,1.49,0,0,0,57,30.79H35.43a1.52,1.52,0,0,0-1.5,1.3L29.32,66.71a.64.64,0,0,1-1.27,0L25,32.16a1.51,1.51,0,0,0-1.5-1.37h-22A1.52,1.52,0,0,0,0,32.47L9.5,109a1.51,1.51,0,0,0,1.5,1.31H38.85A1.5,1.5,0,0,0,40.33,109l4.84-30.48a.6.6,0,0,1,1.19,0l5.7,30.53a1.5,1.5,0,0,0,1.47,1.23H81.41a1.49,1.49,0,0,0,1.48-1.34q4-37.32,8-74.63A15.19,15.19,0,0,1,106,20.72h94.74a3.51,3.51,0,0,1,3.51,3.5V62.71a.48.48,0,0,1-.47.47.45.45,0,0,1-.43-.27L188.73,31.66a1.52,1.52,0,0,0-1.37-.87H162.81a1.5,1.5,0,0,0-1.5,1.51v89.52a19,19,0,0,0,19,19H288.7a38,38,0,0,0,37.13-29.88l2.48-11.36a2,2,0,0,1,2-1.58h11a2,2,0,0,1,2,1.58l1.89,9.1a2,2,0,0,0,2,1.6h22.79A2,2,0,0,0,371.81,107.88Zm-33.26-26.4H333a2,2,0,0,1-2-2.37l4.51-24a.3.3,0,0,1,.29-.25.3.3,0,0,1,.31.25l4.39,24A2,2,0,0,1,338.55,81.48Z" fill="#FAF6EE"/>
+      <path d="M293.87,40.65q-8.44-9.85-28.8-9.86h-30a1.5,1.5,0,0,0-1.5,1.5v76.49a1.5,1.5,0,0,0,1.5,1.5h29.35q37.89,0,37.89-41.47Q302.32,50.38,293.87,40.65ZM272.49,85.83q-1.92,4.48-8.44,4.48h-1.7a1.5,1.5,0,0,1-1.5-1.5V53.16a1.5,1.5,0,0,1,1.5-1.5h1.18q6.66,0,8.71,4.48T274.41,71Q274.41,81.36,272.49,85.83Z" fill="#FAF6EE"/>
+      <path d="M127,59.68a4.59,4.59,0,1,1-4.59-4.61A4.58,4.58,0,0,1,127,59.68Z" fill="#FAF6EE"/>
+      <path d="M157.91,107.88l-12.7-61.15a20,20,0,0,0-19.59-15.94h-6.49A20,20,0,0,0,99.55,46.73L86.84,107.88a2,2,0,0,0,2,2.4h21.66a2,2,0,0,0,2-1.57l2-9.14a2,2,0,0,1,2-1.57h11a2,2,0,0,1,2,1.58l1.89,9.11a2,2,0,0,0,2,1.59H156A2,2,0,0,0,157.91,107.88ZM131.56,65l-8.28,14.33a1,1,0,0,1-1.8,0L113.19,65a10.76,10.76,0,0,1-1.42-5.3A10.61,10.61,0,1,1,131.56,65Z" fill="#FAF6EE"/>
+      <path d="M127,59.68a4.59,4.59,0,1,1-4.59-4.61A4.58,4.58,0,0,1,127,59.68Z" fill="#FAF6EE"/>
+    </svg>
+
+    <p class="planning">The best trips take a little planning…</p>
+    <p class="soon"><b>Wanda</b> launches soon.</p>
+
+    <button class="replay" id="replay" aria-label="Refresh page">
+      <svg width="14" height="14" viewBox="0 0 24 24" fill="none">
+        <path d="M21 12a9 9 0 11-3-6.7M21 3v6h-6" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+      </svg>
+      Refresh page
+    </button>
+  </div>
+</div>
+
+<script>
+  // Scatter stars randomly across the upper two-thirds of the sky
+  (function () {
+    const g = document.getElementById('stars');
+    let html = '';
+    for (let i = 0; i < 52; i++) {
+      const x = (Math.random() * 1440).toFixed(0);
+      const y = (Math.random() * 600).toFixed(0);
+      const r = (Math.random() * 1.5 + 0.4).toFixed(1);
+      const delay = (Math.random() * 4).toFixed(2);
+      html += `<circle class="star" cx="${x}" cy="${y}" r="${r}" style="animation-delay:${delay}s"/>`;
+    }
+    g.innerHTML = html;
+  })();
+
+  const landing = document.getElementById('landing');
+  const journey = document.getElementById('journey');
+  const cta     = document.getElementById('cta');
+  const replay  = document.getElementById('replay');
+  const motion  = document.getElementById('planeMotion');
+  const reduced = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+
+  let timers = [];
+  function clearTimers() { timers.forEach(clearTimeout); timers = []; }
+
+  function launch() {
+    clearTimers();
+    landing.classList.add('gone');
+    journey.classList.add('open');
+    journey.setAttribute('aria-hidden', 'false');
+    journey.classList.remove('draw', 'arrived');
+
+    if (reduced) {
+      journey.classList.add('draw');
+      timers.push(setTimeout(() => journey.classList.add('arrived'), 400));
+      return;
+    }
+
+    timers.push(setTimeout(() => journey.classList.add('draw'), 360));
+    timers.push(setTimeout(() => { try { motion.beginElement(); } catch(e) {} }, 680));
+    timers.push(setTimeout(() => journey.classList.add('arrived'), 2900));
+  }
+
+  cta.addEventListener('click', launch);
+  replay.addEventListener('click', () => window.location.reload());
+</script>
+</body>
+</html>
